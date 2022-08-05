@@ -1,0 +1,134 @@
+---
+title: "HW4"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+#install.packages("twitteR")
+library("NLP")
+library("twitteR")
+library("syuzhet")
+library("tm")
+library("SnowballC")
+library("stringi")
+#install.packages("topicmodels")
+library("topicmodels")
+library("syuzhet")
+#install.packages("ROAuth")
+library("ROAuth")
+library("openssl")
+library("httpuv")
+library("tidyverse")
+```
+
+
+```{r cars}
+# Authonitical keys
+consumer_key <- "Hiding"
+consumer_secret <- "Hiding"
+access_token <- "Hiding"
+access_secret <- "Hiding"
+
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+
+#scrape
+tweet_colts <- searchTwitter("#Colts", n = 1200, lang = "en")
+tweet_colts <- twListToDF(tweet_colts)
+tweet_for_the_shoe <- searchTwitter("#ForTheShoe", n = 1200, lang = "en")
+tweet_for_the_shoe <- twListToDF(tweet_for_the_shoe)
+colts_handle <- searchTwitter("@Colts", n = 1200, lang = "en")
+colts_handle <- twListToDF(colts_handle)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+
+#convert all text to lower case
+tweet_colts<- tolower(tweet_colts)
+tweet_for_the_shoe<- tolower(tweet_for_the_shoe)
+colts_handle<- tolower(colts_handle)
+
+# Replace blank space ("rt")
+tweet_colts <- gsub("rt", "", tweet_colts)
+tweet_for_the_shoe <- gsub("rt", "", tweet_for_the_shoe)
+colts_handle <- gsub("rt", "", colts_handle)
+
+# Replace @UserName
+tweet_colts <- gsub("@\\w+", "", tweet_colts)
+tweet_for_the_shoe <- gsub("@\\w+", "", tweet_for_the_shoe)
+colts_handle <- gsub("@\\w+", "", colts_handle)
+
+
+# Remove punctuation
+tweet_colts <- gsub("[[:punct:]]", "", tweet_colts)
+tweet_for_the_shoe <- gsub("[[:punct:]]", "", tweet_for_the_shoe)
+colts_handle <- gsub("[[:punct:]]", "", colts_handle)
+
+
+# Remove links
+tweet_colts <- gsub("http\\w+", "", tweet_colts)
+tweet_for_the_shoe <- gsub("http\\w+", "", tweet_for_the_shoe)
+colts_handle <- gsub("http\\w+", "", colts_handle)
+
+# Remove tabs
+tweet_colts <- gsub("[ |\t]{2,}", "", tweet_colts)
+tweet_for_the_shoe <- gsub("[ |\t]{2,}", "", tweet_for_the_shoe)
+colts_handle <- gsub("http\\w+", "", colts_handle)
+
+
+# Remove blank spaces at the beginning
+tweet_colts <- gsub("^ ", "", tweet_colts)
+tweet_for_the_shoe <- gsub("^ ", "", tweet_for_the_shoe)
+colts_handle <- gsub("^ ", "", colts_handle)
+
+# Remove blank spaces at the end
+tweet_colts <- gsub(" $", "", tweet_colts)
+tweet_for_the_shoe <- gsub(" $", "", tweet_for_the_shoe)
+colts_handle <- gsub(" $", "", colts_handle)
+
+#getting emotions using in-built function
+mysentiment_colts<-get_nrc_sentiment((tweet_colts))
+mysentiment_for_the_shoe<-get_nrc_sentiment((tweet_for_the_shoe))
+mysentiment_colts_handle<-get_nrc_sentiment((colts_handle))
+
+#calculationg total score for each sentiment
+Sentimentscores_colts<-data.frame(colSums(mysentiment_colts[,]))
+Sentimentscores_for_the_shoe<-data.frame(colSums(mysentiment_for_the_shoe[,]))
+Sentimentscores_for_colts_handle<-data.frame(colSums(mysentiment_colts_handle[,]))
+
+names(Sentimentscores_colts)<-"Score"
+Sentimentscores_colts<-cbind("sentiment"=rownames(Sentimentscores_colts),Sentimentscores_colts)
+rownames(Sentimentscores_colts)<-NULL
+
+names(Sentimentscores_for_the_shoe)<-"Score"
+Sentimentscores_for_the_shoe<-cbind("sentiment"=rownames(Sentimentscores_for_the_shoe),Sentimentscores_for_the_shoe)
+rownames(Sentimentscores_for_the_shoe)<-NULL
+
+names(Sentimentscores_for_colts_handle)<-"Score"
+Sentimentscores_for_colts_handle<-cbind("sentiment"=rownames(Sentimentscores_for_colts_handle),Sentimentscores_for_colts_handle)
+rownames(Sentimentscores_for_colts_handle)<-NULL
+
+
+#plotting the sentiments with scores
+ggplot(data=Sentimentscores_colts,aes(x=sentiment,y=Score))+geom_bar(aes(fill=sentiment),stat = "identity")+
+  theme(legend.position="none")+
+  xlab("Sentiments")+ylab("scores")+ggtitle("Sentiments of people behind the tweets on the Colts Hashtag")
+
+ggplot(data=Sentimentscores_for_the_shoe,aes(x=sentiment,y=Score))+geom_bar(aes(fill=sentiment),stat = "identity")+
+  theme(legend.position="none")+
+  xlab("Sentiments")+ylab("scores")+ggtitle("Sentiments of people behind the tweets on For the Shoe")
+
+ggplot(data=Sentimentscores_for_colts_handle,aes(x=sentiment,y=Score))+geom_bar(aes(fill=sentiment),stat = "identity")+
+  theme(legend.position="none")+
+  xlab("Sentiments")+ylab("scores")+ggtitle("Sentiments of people behind the tweets on the Colts Handle")
+
+
+
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
